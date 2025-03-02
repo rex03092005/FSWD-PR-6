@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+</head>
+<body>
+    <h1>Task Manager</h1>
+    <h2>Create Task</h2>
+    <input type="text" id="title" placeholder="Task Title">
+    <select id="status">
+        <option value="">Select Status</option>
+        <option value="pending">Pending</option>
+        <option value="in-progress">In Progress</option>
+        <option value="completed">Completed</option>
+    </select>
+    <button onclick="createTask()">Create Task</button>
+
+    <h2>Tasks</h2>
+    <ul id="taskList"></ul>
+
+    <script>
+        const apiUrl = '/tasks';
+
+        const fetchTasks = async () => {
+            const response = await fetch(apiUrl);
+            const tasks = await response.json();
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = `${task.title} - ${task.status}`;
+                li.appendChild(createDeleteButton(task.id));
+                taskList.appendChild(li);
+ });
+        };
+
+        const createDeleteButton = (id) => {
+            const button = document.createElement('button');
+            button.textContent = 'Delete';
+            button.onclick = () => deleteTask(id);
+            return button;
+        };
+
+        const createTask = async () => {
+            const title = document.getElementById('title').value;
+            const status = document.getElementById('status').value;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, status })
+            });
+            if (response.ok) {
+                await fetchTasks();
+                document.getElementById('title').value = '';
+                document.getElementById('status').value = '';
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        };
+
+        const deleteTask = async (id) => {
+            const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                await fetchTasks();
+            } else {
+                const error = await response.json();
+                alert(error.error);
+            }
+        };
+
+        // Initial fetch of tasks
+        fetchTasks();
+    </script>
+</body>
+</html>
